@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <payhub>
+                <active>0</active>
+                <model>Payhub\Payments\Model\Method\Payhub</model>
+                <title>PayHub</title>
+                <order_status>pending</order_status>
+                <payment_action>order</payment_action>
+                <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
+                <allowspecific>0</allowspecific>
+                <environment>production</environment>
+                <base_url>https://app.payhub.ly</base_url>
+                <default_psp>moamalat</default_psp>
+                <debug>0</debug>
+            </payhub>
+        </payment>
+    </default>
+</config>

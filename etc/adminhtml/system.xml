@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="payment">
+            <group id="payhub" translate="label" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>PayHub</label>
+                <comment><![CDATA[Accept Sadad / Moamalat / Mobicash / T-Lync / Adfali via PayHub.]]></comment>
+                <field id="active" translate="label" type="select" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <config_path>payment/payhub/active</config_path>
+                </field>
+                <field id="title" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Title</label>
+                    <config_path>payment/payhub/title</config_path>
+                </field>
+                <field id="environment" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Environment</label>
+                    <source_model>Payhub\Payments\Model\Source\Environment</source_model>
+                    <config_path>payment/payhub/environment</config_path>
+                </field>
+                <field id="base_url" translate="label" type="text" sortOrder="11" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Custom base URL</label>
+                    <comment>Used only when Environment is "Custom". Default https://app.payhub.ly.</comment>
+                    <config_path>payment/payhub/base_url</config_path>
+                </field>
+                <field id="api_key" translate="label" type="obscure" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>API key (phk_…)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <config_path>payment/payhub/api_key</config_path>
+                </field>
+                <field id="webhook_secret_hex" translate="label" type="obscure" sortOrder="21" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Webhook secret (hex)</label>
+                    <backend_model>Magento\Config\Model\Config\Backend\Encrypted</backend_model>
+                    <config_path>payment/payhub/webhook_secret_hex</config_path>
+                </field>
+                <field id="default_psp" translate="label" type="select" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Default PSP</label>
+                    <source_model>Payhub\Payments\Model\Source\Psp</source_model>
+                    <config_path>payment/payhub/default_psp</config_path>
+                </field>
+                <field id="debug" translate="label" type="select" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="0">
+                    <label>Debug logging</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <config_path>payment/payhub/debug</config_path>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

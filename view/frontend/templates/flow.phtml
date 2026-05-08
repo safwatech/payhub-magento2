@@ -1,0 +1,88 @@
+<?php
+/** @var \Payhub\Payments\Block\Flow $block */
+$order = $block->getOrder();
+$kind = $block->getNextActionKind();
+$next = $block->getNextAction();
+?>
+
+<section class="payhub-flow" data-order-id="<?= (int) $order->getEntityId() ?>">
+<?php if ($kind === 'redirect'): ?>
+    <h1><?= $block->escapeHtml(__('Redirecting to payment provider…')) ?></h1>
+    <form id="payhub-redirect" method="<?= $block->escapeHtmlAttr(strtoupper((string)($next['method'] ?? 'POST'))) ?>" action="<?= $block->escapeUrl((string) ($next['url'] ?? '')) ?>">
+    <?php foreach ((array)($next['fields'] ?? []) as $name => $value): ?>
+        <input type="hidden" name="<?= $block->escapeHtmlAttr((string) $name) ?>" value="<?= $block->escapeHtmlAttr((string) $value) ?>" />
+    <?php endforeach; ?>
+        <button type="submit" class="action primary"><?= $block->escapeHtml(__('Continue')) ?></button>
+    </form>
+    <script>document.addEventListener('DOMContentLoaded', () => document.getElementById('payhub-redirect').submit());</script>
+
+<?php elseif ($kind === 'otp'): ?>
+    <h1><?= $block->escapeHtml(__('Confirm your payment')) ?></h1>
+    <p><?= $block->escapeHtml(__('A one-time code has been sent to %1.', (string)($next['masked_destination'] ?? ''))) ?></p>
+    <form id="payhub-otp-form">
+        <input type="text" inputmode="numeric" pattern="\d{4,8}" name="code" required autocomplete="one-time-code" />
+        <button type="submit" class="action primary"><?= $block->escapeHtml(__('Confirm')) ?></button>
+    </form>
+    <p class="payhub-status" hidden></p>
+
+<?php elseif ($kind === 'qr'): ?>
+    <h1><?= $block->escapeHtml(__('Scan to pay')) ?></h1>
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=<?= $block->escapeUrl((string)($next['qr_payload'] ?? '')) ?>" alt="QR" width="320" height="320" />
+    <p><code><?= $block->escapeHtml((string)($next['reference'] ?? '')) ?></code></p>
+    <p class="payhub-status"><?= $block->escapeHtml(__('Waiting for payment…')) ?></p>
+
+<?php elseif ($kind === 'lightbox'): ?>
+    <h1><?= $block->escapeHtml(__('Complete your payment')) ?></h1>
+    <div id="payhub-lightbox" data-params='<?= $block->escapeHtmlAttr(json_encode($next['params'] ?? new \stdClass(), JSON_UNESCAPED_SLASHES)) ?>'></div>
+    <?php if (!empty($next['script_url'])): ?>
+        <script src="<?= $block->escapeUrl((string) $next['script_url']) ?>" defer></script>
+    <?php endif; ?>
+    <p class="payhub-status"><?= $block->escapeHtml(__('Awaiting confirmation…')) ?></p>
+
+<?php else: ?>
+    <p><?= $block->escapeHtml(__('Unrecognised PayHub flow.')) ?></p>
+<?php endif; ?>
+</section>
+
+<?php if (in_array($kind, ['otp', 'qr', 'lightbox'], true)): ?>
+<script>
+(function () {
+    var orderId = <?= (int) $order->getEntityId() ?>;
+    var status  = document.querySelector('.payhub-status');
+    var POLL_MS = 3000, POLL_MAX = 120, polled = 0;
+
+    function setStatus(msg, cls) { if (!status) return; status.textContent = msg; status.hidden = false; status.className = 'payhub-status ' + (cls || ''); }
+    function poll() {
+        polled++;
+        if (polled > POLL_MAX) { setStatus('<?= $block->escapeJs(__('Still waiting for confirmation…')->__toString()) ?>', 'is-error'); return clearInterval(int); }
+        fetch('<?= $block->escapeUrl($order->getStore()->getBaseUrl()) ?>payhub/flow/status?id=' + orderId, { credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                if (d.status === 'succeeded' && d.redirect) { clearInterval(int); window.location = d.redirect; }
+                else if (d.status === 'failed') { clearInterval(int); setStatus('<?= $block->escapeJs(__('Payment failed.')->__toString()) ?>', 'is-error'); }
+            }).catch(function () {});
+    }
+    var int = setInterval(poll, POLL_MS);
+
+<?php if ($kind === 'otp'): ?>
+    var form = document.getElementById('payhub-otp-form');
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var code = (form.code.value || '').trim();
+        if (!/^\d{4,8}$/.test(code)) { setStatus('<?= $block->escapeJs(__('Invalid OTP.')->__toString()) ?>', 'is-error'); return; }
+        setStatus('<?= $block->escapeJs(__('Submitting…')->__toString()) ?>');
+        fetch('<?= $block->escapeUrl($order->getStore()->getBaseUrl()) ?>payhub/otp/submit', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ id: orderId, code: code }),
+        }).then(function (r) { return r.json(); })
+          .then(function (d) {
+              if (d.redirect) window.location = d.redirect;
+              else if (d.error) setStatus(d.error, 'is-error');
+          });
+    });
+<?php endif; ?>
+})();
+</script>
+<?php endif; ?>

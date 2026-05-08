@@ -1,0 +1,33 @@
+name: publish
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify-packagist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.sha }}
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - run: composer validate --strict
+      - name: Notify Packagist
+        env:
+          PACKAGIST_TOKEN: ${{ secrets.PACKAGIST_TOKEN }}
+        run: |
+          if [ -z "${PACKAGIST_TOKEN}" ]; then
+            echo "PACKAGIST_TOKEN not set; skipping notify."
+            exit 0
+          fi
+          curl -fsS -XPOST -H 'content-type:application/json' \
+            "https://packagist.org/api/update-package?username=safwatech&apiToken=${PACKAGIST_TOKEN}" \
+            -d '{"repository":{"url":"https://github.com/safwatech/payhub-magento2"}}'

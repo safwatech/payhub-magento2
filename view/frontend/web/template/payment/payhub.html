@@ -1,0 +1,33 @@
+<div class="payment-method" data-bind="css: {'_active': (getCode() == isChecked())}">
+    <div class="payment-method-title field choice">
+        <input type="radio" name="payment[method]" class="radio" data-bind="attr: {'id': getCode()}, value: getCode(), checked: isChecked, click: selectPaymentMethod, visible: isRadioButtonVisible()" />
+        <label class="label" data-bind="attr: {'for': getCode()}"><span data-bind="text: getTitle()"></span></label>
+    </div>
+    <div class="payment-method-content">
+        <div class="payment-method-billing-address">
+            <each args="getRegion('billing-address-form')" render=""></each>
+        </div>
+        <fieldset class="fieldset payhub" data-bind="visible: isChecked() == getCode()">
+            <div class="field">
+                <label class="label" for="payhub-msisdn"><span data-bind="i18n: 'Mobile number'"></span></label>
+                <div class="control">
+                    <input type="tel" id="payhub-msisdn" class="input-text" pattern="^(218)?9\d{8}$" placeholder="2189XXXXXXXX" data-bind="value: msisdn, valueUpdate: 'keyup'" />
+                </div>
+            </div>
+            <div class="field">
+                <label class="label" for="payhub-birth-year"><span data-bind="i18n: 'Birth year (Sadad only)'"></span></label>
+                <div class="control">
+                    <input type="number" id="payhub-birth-year" class="input-text" min="1900" max="2026" placeholder="1990" data-bind="value: birthYear, valueUpdate: 'keyup'" />
+                </div>
+            </div>
+            <div class="checkout-agreements-block">
+                <each args="getRegion('before-place-order')" render=""></each>
+            </div>
+            <div class="actions-toolbar">
+                <button class="action primary checkout" type="submit" data-bind="click: placeOrder, enable: (getCode() == isChecked()), css: {disabled: !isPlaceOrderActionAllowed()}">
+                    <span data-bind="i18n: 'Place Order'"></span>
+                </button>
+            </div>
+        </fieldset>
+    </div>
+</div>
